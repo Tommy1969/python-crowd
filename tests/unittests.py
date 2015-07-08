@@ -244,5 +244,22 @@ class testCrowdAuth(unittest.TestCase):
                                          invalid_param='bad argument')
         self.assertRaisesRegexp(ValueError, "invalid argument .*", f)
 
+    def testPasswordChangeSuccess(self):
+        result = self.crowd.change_password(USER, 'newpassword')
+        self.assertTrue(result)
+
+        result = self.crowd.auth_user(USER, PASS)
+        self.assertIs(result, None)
+
+        result = self.crowd.auth_user(USER, 'newpassword')
+        self.assertIsInstance(result, dict)
+
+        # recover oliginal password for next test
+        result = self.crowd.change_password(USER, PASS)
+
+    def testPasswordChangeInvaliduser(self):
+        result = self.crowd.change_password('invaliduser', 'newpassword')
+        self.assertFalse(result)
+
 if __name__ == "__main__":
     unittest.main()

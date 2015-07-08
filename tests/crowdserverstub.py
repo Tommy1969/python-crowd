@@ -134,6 +134,10 @@ def add_user(username, password, attributes=None):
     if attributes:
         user_attributes[username] = attributes
 
+def change_password(username, password):
+    global user_auth
+    user_auth[username] = password
+
 def remove_user(username):
     global user_auth
     try:
@@ -431,6 +435,24 @@ class CrowdServerStub(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(response).encode('ascii'))
 
+    def _change_password(self):
+        username = self.get_params['username'][0]
+        password = self.json_data['value']
+
+        response = {}
+        response_code = 0
+
+        if user_exists(username):
+            change_password(username, password)
+            response_code = 204
+        else:
+            response_code = 404
+
+        self.send_response(response_code)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(response).encode('ascii'))
+
     def _do_COMMON(self, data={}):
         handlers = [
             {
@@ -492,6 +514,12 @@ class CrowdServerStub(BaseHTTPRequestHandler):
                 "require_auth": True,
                 "method": "POST",
             },
+            {
+                "url": r"/rest/usermanagement/1/user/password$",
+                "action": self._change_password,
+                "require_auth": True,
+                "method": "PUT",
+            },
 
 
             # Default handler for unmatched requests
@@ -546,7 +574,18 @@ class CrowdServerStub(BaseHTTPRequestHandler):
         self._do_COMMON(data=jdata)
 
     def do_PUT(self):
-        self._do_COMMON()
+        ct = self.headers.get('Content-Type')
+        if ct != 'application/json':
+            print("Received unwanted Content-Type (%s) in PUT" % ct)
+
+        cl = int(self.headers.get('Content-Length', 0))
+        if cl > 0:
+            data = self.rfile.read(cl).decode('utf-8')
+        else:
+            data = ""
+
+        jdata = json.loads(data)
+        self._do_COMMON(data=jdata)
 
     def do_DELETE(self):
         self._do_COMMON()

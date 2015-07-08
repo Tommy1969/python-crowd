@@ -82,6 +82,20 @@ class CrowdServer(object):
         req = self.session.post(*args, **kwargs)
         return req
 
+    def _put(self, *args, **kwargs):
+        """Wrapper around Requests for PUT requests
+
+        Returns:
+            Response:
+                A Requests Response object
+        """
+
+        if 'timeout' not in kwargs:
+            kwargs['timeout'] = self.timeout
+
+        req = self.session.put(*args, **kwargs)
+        return req
+
     def _delete(self, *args, **kwargs):
         """Wrapper around Requests for DELETE requests
 
@@ -334,6 +348,17 @@ class CrowdServer(object):
             return None
 
         return response.json()
+
+    def change_password(self, username, newpassword):
+
+        response = self._put(self.rest_url + "/user/password",
+            data=json.dumps({"value": newpassword}),
+            params={"username": username})
+
+        if response.ok:
+            return True
+
+        return False
 
     def get_groups(self, username):
         """Retrieves a list of group names that have <username> as a direct member.
