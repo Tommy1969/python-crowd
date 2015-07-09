@@ -38,6 +38,8 @@ user_attributes = {}
 group_auth = {}
 session_auth = {}
 
+mode_read_only = False
+
 def add_app(app_name, app_pass):
     global app_auth
     app_auth[app_name] = app_pass
@@ -443,8 +445,11 @@ class CrowdServerStub(BaseHTTPRequestHandler):
         response_code = 0
 
         if user_exists(username):
-            change_password(username, password)
-            response_code = 204
+            if not mode_read_only:
+                change_password(username, password)
+                response_code = 204
+            else:
+                response_code = 403
         else:
             response_code = 404
 

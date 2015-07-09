@@ -257,9 +257,25 @@ class testCrowdAuth(unittest.TestCase):
         # recover oliginal password for next test
         result = self.crowd.change_password(USER, PASS)
 
+    def testPasswordChangeWhenReadOnly(self):
+        crowdserverstub.mode_read_only = True
+
+        result = self.crowd.change_password(USER, 'newpassword')
+        self.assertFalse(result)
+
+        result = self.crowd.auth_user(USER, PASS)
+        self.assertIsInstance(result, dict)
+
+        # recover read only to False for for next test
+        crowdserverstub.mode_read_only = False
+
     def testPasswordChangeInvaliduser(self):
         result = self.crowd.change_password('invaliduser', 'newpassword')
         self.assertFalse(result)
+
+        result = self.crowd.auth_user(USER, PASS)
+        self.assertIsInstance(result, dict)
+
 
 if __name__ == "__main__":
     unittest.main()
