@@ -350,6 +350,17 @@ class CrowdServer(object):
         return response.json()
 
     def change_password(self, username, newpassword):
+        """Change new password for a user
+
+        Args:
+            username: The account username.
+
+            newpassword: The account new password.
+
+        Returns:
+            True: Succeeded
+            False: If unsuccessful
+        """
 
         response = self._put(self.rest_url + "/user/password",
             data=json.dumps({"value": newpassword}),
