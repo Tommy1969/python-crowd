@@ -271,11 +271,12 @@ class CrowdServer(object):
         # Otherwise return True
         return True
 
-    def add_user(self, username, **kwargs):
+    def add_user(self, username, raise_on_error=False, **kwargs):
         """Add a user to the directory
 
         Args:
             username: The account username
+            raise_on_error: optional (default: False)
             **kwargs: key-value pairs:
                           password: mandatory
                           email: mandatory
@@ -328,6 +329,9 @@ class CrowdServer(object):
         if response.status_code == 201:
             return True
 
+        if raise_on_error:
+            raise RuntimeError(response.json()['message'])
+
         return False
 
 
@@ -349,13 +353,15 @@ class CrowdServer(object):
 
         return response.json()
 
-    def change_password(self, username, newpassword):
+    def change_password(self, username, newpassword, raise_on_error=False):
         """Change new password for a user
 
         Args:
             username: The account username.
 
             newpassword: The account new password.
+
+            raise_on_error: optional (default: False)
 
         Returns:
             True: Succeeded
@@ -368,6 +374,9 @@ class CrowdServer(object):
 
         if response.ok:
             return True
+
+        if raise_on_error:
+            raise RuntimeError(response.json()['message'])
 
         return False
 

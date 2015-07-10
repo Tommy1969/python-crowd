@@ -426,16 +426,25 @@ class CrowdServerStub(BaseHTTPRequestHandler):
         username = self.json_data['name']
         password = self.json_data['password']
 
-        if not user_exists(username):
-            add_user(username, password, attributes=self.json_data)
-            self.send_response(201)
+        response = {}
+        response_code = 0
+
+        if mode_read_only:
+            response["reason"] = "UNSUPPORTED_OPERATION"
+            response["message"] = "This directory is read-only."
+            response_code = 403
+        elif user_exists(username):
+            response["reason"] = "INVALID_USER"
+            response["message"] = "User already exists."
+            response_code = 400
         else:
-            response = {u'reason': u'INVALID_USER',
-                        u'message': u'User already exists'}
-            self.send_response(400)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(response).encode('ascii'))
+            add_user(username, password, attributes=self.json_data)
+            response_code = 201
+
+        self.send_response(response_code)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(response).encode('ascii'))
 
     def _change_password(self):
         username = self.get_params['username'][0]
@@ -444,14 +453,17 @@ class CrowdServerStub(BaseHTTPRequestHandler):
         response = {}
         response_code = 0
 
-        if user_exists(username):
-            if not mode_read_only:
-                change_password(username, password)
-                response_code = 204
-            else:
-                response_code = 403
+        if mode_read_only:
+            response["reason"] = "UNSUPPORTED_OPERATION"
+            response["message"] = "This directory is read-only."
+            response_code = 403
+        elif not user_exists(username):
+            response["reason"] = "USER_NOT_FOUND"
+            response["message"] = 'User <%s> does not exist.' % username
+            response_code = 400
         else:
-            response_code = 404
+            change_password(username, password)
+            response_code = 204
 
         self.send_response(response_code)
         self.send_header("Content-type", "application/json")
